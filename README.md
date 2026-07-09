@@ -122,6 +122,16 @@ bash scripts/chat.sh
 python -m src.inference --prompt "What does RDS(on) mean and why does it matter?"
 ```
 
+## Web demo
+
+There's a small Gradio chat UI if you'd rather click than type in a terminal:
+
+```bash
+pip install gradio
+python app.py --adapter outputs/llama3-electrical-lora
+# add --share for a temporary public link
+```
+
 ## Evaluate
 
 ```bash

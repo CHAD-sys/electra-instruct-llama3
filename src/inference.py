@@ -15,7 +15,9 @@ from src.config import ModelConfig
 from src.dataset import SYSTEM_PROMPT
 
 
-def load(adapter_dir: str, four_bit: bool = True):
+def load(adapter_dir=None, four_bit: bool = True):
+    """Load the model. Pass adapter_dir=None to get the stock base model
+    (useful for base-vs-fine-tune comparisons in eval)."""
     mcfg = ModelConfig()
     dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
 
@@ -28,14 +30,20 @@ def load(adapter_dir: str, four_bit: bool = True):
             bnb_4bit_compute_dtype=dtype,
         )
 
-    tokenizer = AutoTokenizer.from_pretrained(adapter_dir)
-    base = AutoModelForCausalLM.from_pretrained(
+    # tokenizer comes from the adapter dir when we have one (it was saved there
+    # alongside the adapter), otherwise from the base model.
+    tokenizer = AutoTokenizer.from_pretrained(adapter_dir or mcfg.base_model)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    model = AutoModelForCausalLM.from_pretrained(
         mcfg.base_model,
         quantization_config=quant_cfg,
         torch_dtype=dtype,
         device_map="auto",
     )
-    model = PeftModel.from_pretrained(base, adapter_dir)
+    if adapter_dir:
+        model = PeftModel.from_pretrained(model, adapter_dir)
     model.eval()
     return model, tokenizer
 

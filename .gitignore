@@ -1,0 +1,34 @@
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+
+# training artifacts / big files
+outputs/
+checkpoints/
+wandb/
+*.bin
+*.safetensors
+*.pt
+*.ckpt
+
+# hf cache
+.cache/
+.huggingface/
+
+# the full derived dataset can be regenerated with build_dataset.py,
+# so I don't commit it. seed_pairs + raw docs are enough to rebuild.
+data/electrical_instructions.jsonl
+
+# raw docs I can't redistribute (datasheets under copyright). the few sample
+# ones I wrote myself ARE committed so the pipeline is runnable.
+data/raw/private/
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp

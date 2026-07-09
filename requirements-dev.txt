@@ -1,0 +1,3 @@
+# dev-only deps (not needed to train or run the model)
+-r requirements.txt
+pytest==8.2.2

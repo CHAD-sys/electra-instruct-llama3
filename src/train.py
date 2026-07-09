@@ -7,6 +7,7 @@ This trains a LoRA adapter on top of a 4-bit quantized Llama 3 8B. On my
 RTX 3090 (24GB) one epoch over ~4k examples takes roughly 40 min.
 """
 import argparse
+import json
 import os
 
 import torch
@@ -60,6 +61,10 @@ def main():
     parser.add_argument("--dataset", default=None, help="override dataset path")
     parser.add_argument("--epochs", type=int, default=None)
     parser.add_argument("--output_dir", default=None)
+    parser.add_argument(
+        "--resume_from_checkpoint", default=None,
+        help="path to a checkpoint dir, or 'auto' to pick the latest in output_dir",
+    )
     args = parser.parse_args()
 
     mcfg, lcfg, tcfg = ModelConfig(), LoraConfig(), TrainConfig()
@@ -128,12 +133,25 @@ def main():
         processing_class=tokenizer,
     )
 
-    trainer.train()
+    # "auto" lets transformers find the newest checkpoint in output_dir, which
+    # is what I want after a crash / spot-instance eviction.
+    resume = args.resume_from_checkpoint
+    if resume == "auto":
+        resume = True
+    if resume:
+        print(f"[train] resuming from {resume}")
+    trainer.train(resume_from_checkpoint=resume)
 
     os.makedirs(tcfg.output_dir, exist_ok=True)
     trainer.save_model(tcfg.output_dir)
     tokenizer.save_pretrained(tcfg.output_dir)
+
+    # Dump the loss history to JSON so eval/plots don't depend on parsing stdout.
+    metrics_path = os.path.join(tcfg.output_dir, "train_metrics.json")
+    with open(metrics_path, "w", encoding="utf-8") as f:
+        json.dump(trainer.state.log_history, f, indent=2)
     print(f"[train] adapter saved to {tcfg.output_dir}")
+    print(f"[train] metrics written to {metrics_path}")
 
 
 if __name__ == "__main__":

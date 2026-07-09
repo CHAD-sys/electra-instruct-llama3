@@ -34,6 +34,26 @@ EXPLAIN_TEMPLATES = [
     "When would I choose a {component} in a circuit?",
 ]
 
+# Light-touch paraphrase prefixes so the model doesn't overfit one phrasing.
+# These are prepended to an existing instruction to create a variant that maps
+# to the same answer. Cheap, deterministic, and better than nothing.
+PARAPHRASE_PREFIXES = [
+    "Quick question: ",
+    "Can you tell me, ",
+    "I'm designing a circuit and need to know: ",
+    "For my notes, ",
+]
+
+# Fields I sometimes get asked about but that a datasheet may not list. Teaching
+# the model to say "not determinable" instead of hallucinating a number is one
+# of the more useful behaviors here.
+UNKNOWN_FIELDS = [
+    "operating temperature range",
+    "MTBF",
+    "moisture sensitivity level",
+    "RoHS status",
+]
+
 
 def parse_doc(text: str):
     """Return (component_name, {field: value}, notes_paragraphs)."""
@@ -70,6 +90,34 @@ def make_pairs(component, fields, notes):
     return pairs
 
 
+def make_negative_pairs(component, fields, n=1):
+    """Ask about fields the doc doesn't have, teach an honest 'I don't know'."""
+    missing = [f for f in UNKNOWN_FIELDS if f not in fields]
+    random.shuffle(missing)
+    pairs = []
+    for field in missing[:n]:
+        q = f"What is the {field} of the {component}?"
+        a = (f"That isn't specified in the information I have for the "
+             f"{component}. Check the manufacturer's datasheet for the exact "
+             f"{field}.")
+        pairs.append({"instruction": q, "input": "", "output": a})
+    return pairs
+
+
+def paraphrase(pairs, n_variants=1):
+    """Create n paraphrased copies of each pair mapping to the same output."""
+    extra = []
+    for p in pairs:
+        prefixes = PARAPHRASE_PREFIXES[:]
+        random.shuffle(prefixes)
+        for prefix in prefixes[:n_variants]:
+            instr = p["instruction"]
+            # lowercase the first letter so "Quick question: what..." reads right
+            variant = prefix + instr[0].lower() + instr[1:]
+            extra.append({**p, "instruction": variant})
+    return extra
+
+
 def load_seed(path):
     if not os.path.exists(path):
         return []
@@ -87,6 +135,10 @@ def main():
     ap.add_argument("--raw_dir", default="data/raw")
     ap.add_argument("--seed_pairs", default="data/seed_pairs.jsonl")
     ap.add_argument("--out", default="data/electrical_instructions.jsonl")
+    ap.add_argument("--paraphrases", type=int, default=1,
+                    help="paraphrase variants per pair (0 = off)")
+    ap.add_argument("--negatives", type=int, default=1,
+                    help="'not determinable' examples per doc (0 = off)")
     args = ap.parse_args()
 
     all_pairs = load_seed(args.seed_pairs)
@@ -98,6 +150,13 @@ def main():
             component, fields, notes = parse_doc(f.read())
         if component:
             all_pairs.extend(make_pairs(component, fields, notes))
+            if args.negatives:
+                all_pairs.extend(make_negative_pairs(component, fields, args.negatives))
+
+    if args.paraphrases:
+        variants = paraphrase(all_pairs, args.paraphrases)
+        print(f"[build] +{len(variants)} paraphrased variants")
+        all_pairs.extend(variants)
 
     # de-dup on (instruction, output)
     seen = set()

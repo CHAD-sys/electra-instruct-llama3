@@ -1,0 +1,11 @@
+LM7805 linear voltage regulator
+Output voltage: 5 V (fixed)
+Maximum input voltage: 35 V
+Minimum input voltage: 7 V (2 V dropout above output)
+Output current: up to 1 A with adequate heatsinking
+Quiescent current: about 5 mA
+Package: TO-220
+Line regulation: typically 4 mV
+Load regulation: typically 15 mV
+
+The LM7805 is a three-terminal positive fixed regulator that produces a stable 5 V output from a higher DC input. It is easy to use, needs only a couple of ceramic bypass capacitors (0.33 uF on the input and 0.1 uF on the output) and includes internal thermal shutdown and current limiting. Because it is a linear regulator, the power dissipated is the input-to-output voltage difference times the load current, so it can get hot and usually needs a heatsink when the drop or current is large.

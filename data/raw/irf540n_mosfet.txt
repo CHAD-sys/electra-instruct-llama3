@@ -1,0 +1,10 @@
+IRF540N power MOSFET
+Type: N-channel enhancement mode
+Drain-source voltage (VDS): 100 V
+Continuous drain current (ID): 33 A at 25 C
+RDS(on): 44 mohm at VGS = 10 V
+Gate threshold voltage (VGS(th)): 2 V to 4 V
+Total gate charge: about 71 nC
+Package: TO-220
+
+The IRF540N is a common N-channel power MOSFET used for switching moderate DC loads such as motors, heaters and LED strips. It is a standard-level device, meaning it needs roughly 10 V on the gate to fully turn on, so it is not ideal for direct 3.3 V or 5 V microcontroller drive without a gate driver or a logic-level part. Its low RDS(on) keeps conduction losses small, but the gate charge means you need enough drive current for fast switching if you are running it at high frequency.

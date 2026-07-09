@@ -1,0 +1,8 @@
+NE555 timer IC
+Supply voltage: 4.5 V to 16 V
+Output current: up to 200 mA
+Timing range: microseconds to hours
+Operating modes: astable, monostable, bistable
+Package: DIP-8, SOIC-8
+
+The NE555 is a general-purpose timer that can operate as an oscillator (astable mode) or a one-shot pulse generator (monostable mode). In astable mode the frequency is set by two resistors and a capacitor: f = 1.44 / ((R1 + 2*R2) * C). The output drives loads up to 200 mA directly, which is enough for small relays, LEDs and buzzers. Its threshold and trigger comparators reference 2/3 and 1/3 of the supply voltage, which is why timing is largely independent of supply voltage.
